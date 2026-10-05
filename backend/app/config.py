@@ -3,11 +3,16 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Authentication Mode: "local" (zero-dependency dev tokens & local JWT) or "aws" (Amazon Cognito JWT)
+AUTH_MODE = os.getenv("AUTH_MODE", "local").lower().strip()
+
+# Storage Mode: "local" (SQLite relational mirror) or "aws" (Amazon DynamoDB & S3)
 STORAGE_MODE = os.getenv("STORAGE_MODE", "local").lower().strip()
+
 PORT = int(os.getenv("PORT", "8000"))
 HOST = os.getenv("HOST", "0.0.0.0")
 
-# AWS Settings
+# AWS Settings (used when AUTH_MODE=aws or STORAGE_MODE=aws)
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE_NAME", "InventoryManagementTable")
 S3_REPORTS_BUCKET = os.getenv("S3_REPORTS_BUCKET", "inventory-reports-mtech-storage")

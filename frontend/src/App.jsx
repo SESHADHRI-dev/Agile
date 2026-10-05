@@ -20,6 +20,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [theme, setTheme] = useState('dark');
   const [loading, setLoading] = useState(true);
+  const [authConfig, setAuthConfig] = useState(null);
 
   // Core Data
   const [inventorySummary, setInventorySummary] = useState(null);
@@ -34,41 +35,62 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Initial user check
+  // Initial authentication & configuration handshake
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (savedToken) {
-      api.getProfile()
-        .then(setUser)
-        .catch(() => {
-          // Default to local admin if dev mode
-          setUser({ id: 'USR-ADM-001', username: 'admin@inventory.io', role: 'Admin', name: 'Dr. S. Sharma (Administrator)' });
-        })
-        .finally(() => setLoading(false));
-    } else {
-      // Auto-assign mock admin in local dev for fast demo
-      setUser({ id: 'USR-ADM-001', username: 'admin@inventory.io', role: 'Admin', name: 'Dr. S. Sharma (Administrator)' });
-      setLoading(false);
-    }
+    const initApp = async () => {
+      try {
+        // 1. Fetch server config (determines if local dev or AWS Cognito)
+        const cfg = await api.getAuthConfig().catch(() => ({
+          auth_mode: 'local',
+          storage_mode: 'local',
+          is_local: true,
+          default_admin: { username: 'admin@inventory.io', role: 'Admin', name: 'Dr. S. Sharma (Administrator)' }
+        }));
+        setAuthConfig(cfg);
+
+        // 2. Resolve active user session
+        let activeUser = null;
+        try {
+          activeUser = await api.getProfile();
+        } catch (e) {
+          // In local dev mode, auto-login with default admin if token expired or missing
+          if (cfg.is_local) {
+            console.log('[Auth] Initializing local dev session for Administrator...');
+            api.setToken('dev-admin-token');
+            activeUser = cfg.default_admin;
+          }
+        }
+
+        if (activeUser) {
+          setUser(activeUser);
+        }
+      } catch (err) {
+        console.error('Failed to initialize application:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initApp();
   }, []);
 
   const refreshAllData = async () => {
     try {
       const [invRes, prodRes, supRes, purRes, salRes, altRes] = await Promise.all([
-        api.getInventory().catch(() => null),
-        api.getProducts().catch(() => ({ data: [] })),
-        api.getSuppliers().catch(() => ({ data: [] })),
-        api.getPurchases().catch(() => ({ data: [] })),
-        api.getSales().catch(() => ({ data: [] })),
-        api.getAlerts().catch(() => ({ data: [] }))
+        api.getInventory().catch(err => { console.error('Inventory error:', err); return null; }),
+        api.getProducts().catch(err => { console.error('Products error:', err); return { data: [] }; }),
+        api.getSuppliers().catch(err => { console.error('Suppliers error:', err); return { data: [] }; }),
+        api.getPurchases().catch(err => { console.error('Purchases error:', err); return { data: [] }; }),
+        api.getSales().catch(err => { console.error('Sales error:', err); return { data: [] }; }),
+        api.getAlerts().catch(err => { console.error('Alerts error:', err); return { data: [] }; })
       ]);
 
       if (invRes) setInventorySummary(invRes);
-      if (prodRes) setProducts(prodRes.data || []);
-      if (supRes) setSuppliers(supRes.data || []);
-      if (purRes) setPurchases(purRes.data || []);
-      if (salRes) setSales(salRes.data || []);
-      if (altRes) setAlerts(altRes.data || []);
+      if (prodRes && prodRes.data) setProducts(prodRes.data);
+      if (supRes && supRes.data) setSuppliers(supRes.data);
+      if (purRes && purRes.data) setPurchases(purRes.data);
+      if (salRes && salRes.data) setSales(salRes.data);
+      if (altRes && altRes.data) setAlerts(altRes.data);
     } catch (err) {
       console.error('Error syncing app data:', err);
     }
@@ -86,13 +108,19 @@ export default function App() {
 
   const handleLogout = () => {
     api.logout();
-    setUser(null);
+    if (authConfig?.is_local) {
+      // In local mode, immediately offer login modal or reset
+      setUser(null);
+    } else {
+      setUser(null);
+    }
   };
 
   const handleSwitchUser = async (email) => {
     try {
       const res = await api.login(email, 'Password123!');
       setUser(res.user);
+      api.setToken(res.token);
       refreshAllData();
     } catch (err) {
       console.error('Failed to switch user:', err);
@@ -115,9 +143,9 @@ export default function App() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'var(--accent-primary)', fontWeight: 700, fontSize: '1.25rem' }}>
-          Initializing IntelliStock System...
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+        <div style={{ color: 'var(--accent-primary)', fontWeight: 700, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span>Initializing IntelliStock System...</span>
         </div>
       </div>
     );
@@ -125,7 +153,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {!user && <LoginModal onLoginSuccess={setUser} />}
+      {!user && <LoginModal onLoginSuccess={(u) => { setUser(u); refreshAllData(); }} />}
 
       <Sidebar
         activeTab={activeTab}
@@ -142,6 +170,8 @@ export default function App() {
           toggleTheme={toggleTheme}
           onRefresh={refreshAllData}
           onLogout={handleLogout}
+          authConfig={authConfig}
+          user={user}
         />
 
         <main className="content-body">

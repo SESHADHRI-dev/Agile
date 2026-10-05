@@ -50,6 +50,69 @@ def test_auth_login_invalid():
     assert res.status_code == 401
 
 
+def test_auth_config_endpoint():
+    res = client.get("/api/auth/config")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["auth_mode"] == "local"
+    assert data["is_local"] is True
+    assert "default_admin" in data
+
+
+def test_demo_token_endpoint():
+    res = client.get("/api/auth/demo-token?role=Admin")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["success"] is True
+    assert "token" in data
+    assert data["dev_token_alias"] == "dev-admin-token"
+
+
+def test_dev_admin_bearer_token_creates_product():
+    # Mandatory test: POST /api/products with Authorization: Bearer dev-admin-token
+    headers = {"Authorization": "Bearer dev-admin-token"}
+    payload = {
+        "name": "Local Dev Test Product",
+        "category": "Electronics",
+        "price": 199.99,
+        "quantity": 50,
+        "min_stock_level": 10
+    }
+    res = client.post("/api/products", json=payload, headers=headers)
+    assert res.status_code == 201
+    data = res.json()
+    assert data["success"] is True
+    assert data["data"]["name"] == "Local Dev Test Product"
+
+
+def test_staff_role_forbidden_on_create_product():
+    # Staff role should be rejected on Admin-only routes with 403
+    headers = {"Authorization": "Bearer dev-staff-token"}
+    payload = {
+        "name": "Staff Attempted Product",
+        "category": "Sensors",
+        "price": 49.99,
+        "quantity": 10,
+        "min_stock_level": 5
+    }
+    res = client.post("/api/products", json=payload, headers=headers)
+    assert res.status_code == 403
+    assert "Access denied" in res.json()["detail"]
+
+
+def test_staff_role_allowed_on_sales():
+    # Staff role can record customer sales
+    headers = {"Authorization": "Bearer dev-staff-token"}
+    payload = {
+        "product_id": "PRD-1002",
+        "quantity": 2,
+        "unit_price": 45.00
+    }
+    res = client.post("/api/sales", json=payload, headers=headers)
+    assert res.status_code == 201
+    assert res.json()["success"] is True
+
+
 def test_products_list_and_search():
     res = client.get("/api/products")
     assert res.status_code == 200
