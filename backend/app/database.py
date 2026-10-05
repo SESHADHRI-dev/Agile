@@ -1,27 +1,62 @@
 import sqlite3
 import json
 import uuid
-from datetime import datetime, timedelta
+import logging
+from decimal import Decimal
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from backend.app.config import STORAGE_MODE, SQLITE_DB_PATH, DYNAMODB_TABLE_NAME, AWS_REGION
 from backend.app.domain import InventoryLogic
+
+logger = logging.getLogger("inventory-db")
+
+
+def _utc_now_iso() -> str:
+    """Returns current UTC timestamp in ISO 8601 format with Z suffix."""
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _decimal_to_native(obj):
+    """Converts DynamoDB Decimal instances back to float/int."""
+    if isinstance(obj, list):
+        return [_decimal_to_native(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: _decimal_to_native(v) for k, v in obj.items()}
+    elif isinstance(obj, Decimal):
+        return int(obj) if obj % 1 == 0 else float(obj)
+    return obj
+
+
+def _native_to_decimal(obj):
+    """Converts floats to Decimals for DynamoDB serialization."""
+    if isinstance(obj, list):
+        return [_native_to_decimal(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: _native_to_decimal(v) for k, v in obj.items()}
+    elif isinstance(obj, float):
+        return Decimal(str(obj))
+    return obj
 
 
 class Database:
     """
     Unified database interface supporting dual-mode operations:
     1. Local Mode: Embedded SQLite with transparent JSON serialization
-    2. AWS Cloud Mode: Amazon DynamoDB via Boto3
+    2. AWS Cloud Mode: Amazon DynamoDB Single-Table Design via Boto3
     """
 
     def __init__(self):
-        self.mode = STORAGE_MODE
+        self.mode = STORAGE_MODE.lower().strip()
+        self.table = None
+        self._init_sqlite()  # Always initialize SQLite schema so local dev & fallback are guaranteed
         if self.mode == "aws":
-            import boto3
-            self.dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
-            self.table = self.dynamodb.Table(DYNAMODB_TABLE_NAME)
-        else:
-            self._init_sqlite()
+            try:
+                import boto3
+                self.dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+                self.table = self.dynamodb.Table(DYNAMODB_TABLE_NAME)
+                logger.info(f"DynamoDB mode configured for table '{DYNAMODB_TABLE_NAME}' in region '{AWS_REGION}'")
+            except Exception as e:
+                logger.warning(f"DynamoDB initialization notice: {e}. SQLite local engine remains active.")
 
     # ==========================================================================
     # SQLite Implementation (Local Mode)
@@ -140,7 +175,7 @@ class Database:
 
     def create_supplier(self, data: Dict[str, Any]) -> Dict[str, Any]:
         supplier_id = f"SUP-{uuid.uuid4().hex[:6].upper()}"
-        now = datetime.utcnow().isoformat() + "Z"
+        now = _utc_now_iso()
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -242,7 +277,7 @@ class Database:
 
     def create_product(self, data: Dict[str, Any]) -> Dict[str, Any]:
         product_id = f"PRD-{uuid.uuid4().hex[:6].upper()}"
-        now = datetime.utcnow().isoformat() + "Z"
+        now = _utc_now_iso()
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -272,7 +307,7 @@ class Database:
         if not fields:
             return self.get_product_by_id(product_id)
 
-        now = datetime.utcnow().isoformat() + "Z"
+        now = _utc_now_iso()
         fields.append("updated_at = ?")
         values.append(now)
 
@@ -299,7 +334,7 @@ class Database:
         purchase_qty = int(data["quantity"])
         unit_cost = float(data["unit_cost"])
         total_cost = round(purchase_qty * unit_cost, 2)
-        purchase_date = data.get("purchase_date") or (datetime.utcnow().isoformat() + "Z")
+        purchase_date = data.get("purchase_date") or _utc_now_iso()
         purchase_id = f"PUR-{uuid.uuid4().hex[:6].upper()}"
 
         with self._get_connection() as conn:
@@ -331,7 +366,7 @@ class Database:
             ))
 
             # Update product stock
-            now = datetime.utcnow().isoformat() + "Z"
+            now = _utc_now_iso()
             cursor.execute("UPDATE products SET quantity = ?, updated_at = ? WHERE id = ?", (new_stock, now, product_id))
             conn.commit()
 
@@ -371,7 +406,7 @@ class Database:
         sale_qty = int(data["quantity"])
         unit_price = float(data["unit_price"])
         total_revenue = round(sale_qty * unit_price, 2)
-        sale_date = data.get("sale_date") or (datetime.utcnow().isoformat() + "Z")
+        sale_date = data.get("sale_date") or _utc_now_iso()
         sale_id = f"SAL-{uuid.uuid4().hex[:6].upper()}"
 
         with self._get_connection() as conn:
@@ -402,7 +437,7 @@ class Database:
             ))
 
             # Update product stock
-            now = datetime.utcnow().isoformat() + "Z"
+            now = _utc_now_iso()
             cursor.execute("UPDATE products SET quantity = ?, updated_at = ? WHERE id = ?", (new_stock, now, product_id))
             conn.commit()
 
@@ -473,7 +508,7 @@ class Database:
                     "current_stock": p["quantity"],
                     "min_stock_level": p["min_stock_level"],
                     "message": f"Product '{p['name']}' is completely OUT OF STOCK! Immediate reorder required.",
-                    "created_at": datetime.utcnow().isoformat() + "Z"
+                    "created_at": _utc_now_iso()
                 })
             elif p["status"] == "LOW STOCK":
                 deficit = p["min_stock_level"] - p["quantity"]
@@ -485,7 +520,7 @@ class Database:
                     "current_stock": p["quantity"],
                     "min_stock_level": p["min_stock_level"],
                     "message": f"Product '{p['name']}' has fallen below minimum threshold ({p['quantity']} <= {p['min_stock_level']}). Deficit: {deficit} units.",
-                    "created_at": datetime.utcnow().isoformat() + "Z"
+                    "created_at": _utc_now_iso()
                 })
         return alerts
 
@@ -519,7 +554,7 @@ class Database:
                 ("SUP-004", "Quantum Power Solutions", "Elena Rostova", "+1-555-0104", "elena@quantumpower.de", "77 Energieweg, Munich, Germany", "Power Supplies, Batteries"),
                 ("SUP-005", "Apex Fasteners & Hardware", "David Miller", "+1-555-0105", "david@apexfasteners.com", "230 Steel Mill Rd, Pittsburgh, PA", "Hardware, Mounts")
             ]
-            now = datetime.utcnow().isoformat() + "Z"
+            now = _utc_now_iso()
             for sup in suppliers_data:
                 cursor.execute("""
                 INSERT INTO suppliers (id, name, contact_person, phone, email, address, supplied_categories, is_active, created_at)
@@ -551,7 +586,7 @@ class Database:
                 """, (*p, now, now))
 
             # 3. Historical Sales (Simulate continuous sales across the past 45 days to feed ML prediction)
-            base_date = datetime.utcnow()
+            base_date = datetime.now(timezone.utc)
             sales_seed = []
             for day_offset in range(45, 0, -1):
                 d = (base_date - timedelta(days=day_offset)).strftime("%Y-%m-%d") + "T14:00:00Z"

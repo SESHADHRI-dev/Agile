@@ -10,7 +10,7 @@
 
 ### 1.1 User Login
 - **Endpoint:** `POST /auth/login`
-- **Description:** Authenticates user credentials via Cognito or Local Auth Provider.
+- **Description:** Authenticates user credentials via Cognito (AWS Production Mode) or Local Auth Provider (Local Dev Mode).
 - **Request Body:**
   ```json
   {
@@ -22,12 +22,48 @@
   ```json
   {
     "success": true,
-    "token": "eyJhbGciOi...",
+    "token": "dev-admin-token",
     "user": {
       "id": "USR-001",
       "username": "admin@inventory.io",
       "role": "Admin",
-      "name": "Admin Manager"
+      "name": "Dr. S. Sharma (Administrator)"
+    }
+  }
+  ```
+
+### 1.2 Authentication Mode Discovery
+- **Endpoint:** `GET /auth/config`
+- **Description:** Handshake endpoint returning current authentication and storage runtime configuration.
+- **Response (200 OK):**
+  ```json
+  {
+    "auth_mode": "local",
+    "storage_mode": "local",
+    "is_local": true,
+    "cognito_configured": false,
+    "default_admin": {
+      "username": "admin@inventory.io",
+      "role": "Admin",
+      "name": "Dr. S. Sharma (Administrator)"
+    }
+  }
+  ```
+
+### 1.3 Rapid Local Demo Token
+- **Endpoint:** `GET /auth/demo-token?role=Admin`
+- **Description:** Generates instant dev Bearer token for automated tests or local evaluation without AWS Cognito dependency.
+- **Query Parameters:** `role` (`Admin` or `Staff`, defaults to `Admin`).
+- **Response (200 OK):**
+  ```json
+  {
+    "token": "dev-admin-token",
+    "token_type": "bearer",
+    "user": {
+      "id": "USR-LOCAL-ADMIN",
+      "username": "admin@inventory.io",
+      "role": "Admin",
+      "name": "Dr. S. Sharma (Administrator)"
     }
   }
   ```

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, ShieldCheck, UserCheck, Database, LogOut, RefreshCw, KeyRound, Cloud } from 'lucide-react';
+import { Sun, Moon, ShieldCheck, UserCheck, Database, LogOut, RefreshCw, KeyRound, Cloud, Menu } from 'lucide-react';
 
 export default function Navbar({
   activeTitle,
@@ -9,7 +9,8 @@ export default function Navbar({
   onRefresh,
   onLogout,
   authConfig,
-  user
+  user,
+  onToggleMobileMenu
 }) {
   const isLocalAuth = !authConfig || authConfig.is_local;
   const isLocalStorage = !authConfig || authConfig.storage_mode === 'local';
@@ -22,18 +23,29 @@ export default function Navbar({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '0 2rem',
+      padding: '0 1.5rem',
       position: 'sticky',
       top: 0,
       zIndex: 10
     }}>
-      {/* Title & Breadcrumbs */}
-      <div>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-          {activeTitle}
-        </h1>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          Cloud Inventory & Stock Prediction System &bull; <span style={{ color: 'var(--accent-primary)' }}>Active Session</span>
+      {/* Title & Breadcrumbs & Mobile Trigger */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <button
+          onClick={onToggleMobileMenu}
+          className="mobile-menu-btn btn btn-secondary btn-sm"
+          style={{ padding: '0.4rem', display: 'none' }}
+          title="Open menu"
+        >
+          <Menu size={18} />
+        </button>
+
+        <div>
+          <h1 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            {activeTitle}
+          </h1>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Cloud Inventory & Stock Prediction System &bull; <span style={{ color: 'var(--accent-primary)' }}>Active Session</span>
+          </div>
         </div>
       </div>
 

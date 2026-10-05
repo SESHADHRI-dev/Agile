@@ -10,11 +10,23 @@ export default function ReportsView() {
     api.getReportsSummary().then(setSummary).catch(console.error);
   }, []);
 
-  const handleDownload = (reportType) => {
+  const handleDownload = async (reportType) => {
     setDownloading(reportType);
-    const url = api.getExportUrl(reportType);
-    window.open(url, '_blank');
-    setTimeout(() => setDownloading(''), 1500);
+    try {
+      const blob = await api.downloadReport(reportType);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report_${reportType}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message || 'Failed to download report');
+    } finally {
+      setDownloading('');
+    }
   };
 
   const reportsList = [

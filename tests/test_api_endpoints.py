@@ -206,3 +206,65 @@ def test_report_export_csv():
     assert res.status_code == 200
     assert "text/csv" in res.headers["content-type"]
     assert "Product ID,Product Name" in res.text
+
+
+def test_suppliers_crud():
+    # 1. List suppliers
+    list_res = client.get("/api/suppliers")
+    assert list_res.status_code == 200
+    assert list_res.json()["count"] >= 5
+
+    # 2. Create supplier (Admin)
+    create_res = client.post("/api/suppliers", json={
+        "name": "Global Sensor Innovations",
+        "contact_person": "Sarah Chen",
+        "phone": "+1-555-0899",
+        "email": "sarah@globalsensors.com",
+        "address": "500 Innovation Way, Austin, TX",
+        "supplied_categories": "Sensors, IoT"
+    }, headers={"Authorization": "Bearer dev-admin-token"})
+    assert create_res.status_code == 201
+    sup = create_res.json()["data"]
+    sup_id = sup["id"]
+    assert sup["name"] == "Global Sensor Innovations"
+
+    # 3. Update supplier
+    update_res = client.put(f"/api/suppliers/{sup_id}", json={
+        "contact_person": "Dr. Sarah Chen"
+    }, headers={"Authorization": "Bearer dev-admin-token"})
+    assert update_res.status_code == 200
+    assert update_res.json()["data"]["contact_person"] == "Dr. Sarah Chen"
+
+    # 4. Delete / Deactivate supplier
+    del_res = client.delete(f"/api/suppliers/{sup_id}", headers={"Authorization": "Bearer dev-admin-token"})
+    assert del_res.status_code == 200
+    assert del_res.json()["success"] is True
+
+
+def test_recommendations_endpoint():
+    res = client.get("/api/predictions/recommendations?method=exponential_smoothing")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["success"] is True
+    assert data["count"] >= 15
+    assert len(data["data"]) >= 15
+    assert any("urgency_status" in r for r in data["data"])
+
+
+def test_reports_summary_endpoint():
+    res = client.get("/api/reports/summary")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["success"] is True
+    assert data["total_products"] >= 15
+    assert data["total_inventory_value"] > 0
+    assert data["total_sales_revenue"] > 0
+
+
+def test_all_report_export_types():
+    for rtype in ["inventory", "low_stock", "sales", "purchases", "predictions"]:
+        res = client.get(f"/api/reports/export?report_type={rtype}&format=csv")
+        assert res.status_code == 200
+        assert "text/csv" in res.headers["content-type"]
+        assert len(res.text) > 0
+

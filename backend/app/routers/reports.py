@@ -2,7 +2,7 @@ import csv
 import io
 from fastapi import APIRouter, Depends, Query, Response, HTTPException
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.app.database import db
 from backend.app.auth import get_current_user
 from backend.app.config import STORAGE_MODE, S3_REPORTS_BUCKET, AWS_REGION, REPORTS_DIR
@@ -45,7 +45,7 @@ def export_report(
     """
     output = io.StringIO()
     writer = csv.writer(output)
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     filename = f"report_{report_type}_{timestamp}.csv"
 
     if report_type == "inventory":

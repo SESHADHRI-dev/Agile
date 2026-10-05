@@ -182,6 +182,17 @@ class ApiService {
     return `${API_BASE}/reports/export?report_type=${reportType}&format=csv`;
   }
 
+  async downloadReport(reportType) {
+    const res = await fetch(`${API_BASE}/reports/export?report_type=${reportType}&format=csv`, {
+      headers: this.getHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: "Failed to download report" }));
+      throw new Error(err.detail || err.error || "Failed to download report");
+    }
+    return res.blob();
+  }
+
   async seedDatabase() {
     return this.request("/seed", { method: "POST" });
   }

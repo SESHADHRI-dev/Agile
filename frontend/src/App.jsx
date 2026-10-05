@@ -18,6 +18,7 @@ import { api } from './api';
 export default function App() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
   const [loading, setLoading] = useState(true);
   const [authConfig, setAuthConfig] = useState(null);
@@ -155,11 +156,20 @@ export default function App() {
     <div className="app-container">
       {!user && <LoginModal onLoginSuccess={(u) => { setUser(u); refreshAllData(); }} />}
 
+      {mobileMenuOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         alertCount={alerts.length}
         user={user}
+        mobileOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
       />
 
       <div className="main-content">
@@ -172,6 +182,7 @@ export default function App() {
           onLogout={handleLogout}
           authConfig={authConfig}
           user={user}
+          onToggleMobileMenu={() => setMobileMenuOpen(prev => !prev)}
         />
 
         <main className="content-body">

@@ -12,10 +12,11 @@ import {
   FileText,
   Settings,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  X
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, alertCount = 0, user }) {
+export default function Sidebar({ activeTab, setActiveTab, alertCount = 0, user, mobileOpen = false, onClose }) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory Status', icon: Package },
@@ -31,7 +32,7 @@ export default function Sidebar({ activeTab, setActiveTab, alertCount = 0, user 
   ];
 
   return (
-    <aside style={{
+    <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`} style={{
       width: '270px',
       background: 'var(--bg-secondary)',
       borderRight: '1px solid var(--border-color)',
@@ -45,29 +46,49 @@ export default function Sidebar({ activeTab, setActiveTab, alertCount = 0, user 
         borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         gap: '0.75rem'
       }}>
-        <div style={{
-          width: '42px',
-          height: '42px',
-          borderRadius: '12px',
-          background: 'var(--accent-gradient)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          boxShadow: '0 4px 12px var(--accent-glow)'
-        }}>
-          <BrainCircuit size={24} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
+            background: 'var(--accent-gradient)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            boxShadow: '0 4px 12px var(--accent-glow)'
+          }}>
+            <BrainCircuit size={24} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+              IntelliStock
+            </h2>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+              M.Tech Cloud Project
+            </span>
+          </div>
         </div>
-        <div>
-          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-            IntelliStock
-          </h2>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-            M.Tech Cloud Project
-          </span>
-        </div>
+
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="mobile-menu-btn"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              padding: '0.25rem'
+            }}
+            title="Close navigation"
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* Navigation List */}
@@ -79,7 +100,10 @@ export default function Sidebar({ activeTab, setActiveTab, alertCount = 0, user 
             return (
               <li key={item.id} style={{ marginBottom: '0.25rem' }}>
                 <button
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (onClose) onClose();
+                  }}
                   style={{
                     width: '100%',
                     display: 'flex',

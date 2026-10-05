@@ -70,3 +70,57 @@ def test_generate_recommendation_pipeline():
     assert result["predicted_demand"] == 150
     assert result["recommended_restock"] > 0
     assert result["current_stock"] == 25
+
+
+def test_prediction_empty_sales_history():
+    """Ensure pipeline never crashes when historical sales dataset is completely empty."""
+    res = DemandForecaster.generate_recommendation(
+        sales_records=[],
+        current_stock=10,
+        method="exponential_smoothing"
+    )
+    assert res["daily_demand_rate"] == 0.0
+    assert res["predicted_demand"] == 0
+    assert res["recommended_restock"] == 0
+    assert res["urgency_status"] == "SUFFICIENT_STOCK"
+
+
+def test_prediction_zero_sales():
+    """Ensure pipeline handles all-zero sales without dividing by zero."""
+    records = [{"sale_date": "2026-09-01T10:00:00Z", "quantity": 0}]
+    res = DemandForecaster.generate_recommendation(
+        sales_records=records,
+        current_stock=5,
+        method="moving_average"
+    )
+    assert res["predicted_demand"] == 0
+    assert res["recommended_restock"] == 0
+
+
+def test_prediction_single_transaction():
+    """Ensure pipeline handles a single sale record correctly."""
+    records = [{"sale_date": "2026-09-01T10:00:00Z", "quantity": 4}]
+    res = DemandForecaster.generate_recommendation(
+        sales_records=records,
+        current_stock=0,
+        method="exponential_smoothing"
+    )
+    assert res["daily_demand_rate"] == 4.0
+    assert res["urgency_status"] == "CRITICAL_OUT_OF_STOCK"
+    assert res["recommended_restock"] > 0
+
+
+def test_prediction_irregular_dates():
+    """Ensure days between irregular sales are interpolated with 0."""
+    records = [
+        {"sale_date": "2026-09-01T10:00:00Z", "quantity": 10},
+        {"sale_date": "2026-09-05T10:00:00Z", "quantity": 10}
+    ]
+    res = DemandForecaster.generate_recommendation(
+        sales_records=records,
+        current_stock=15,
+        method="weighted_moving_average"
+    )
+    assert res["historical_days_analyzed"] == 5  # Sept 1 to Sept 5 = 5 days
+    assert res["total_historical_sales_units"] == 20
+
