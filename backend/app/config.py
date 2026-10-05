@@ -13,7 +13,7 @@ PORT = int(os.getenv("PORT", "8000"))
 HOST = os.getenv("HOST", "0.0.0.0")
 
 # AWS Settings (used when AUTH_MODE=aws or STORAGE_MODE=aws)
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
 DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE_NAME", "InventoryManagementTable")
 S3_REPORTS_BUCKET = os.getenv("S3_REPORTS_BUCKET", "inventory-reports-mtech-storage")
 COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "")

@@ -21,14 +21,14 @@ def get_auth_config():
         "storage_mode": STORAGE_MODE,
         "is_local": AUTH_MODE in ["local", "development", "dev"],
         "default_admin": {
-            "username": "admin@inventory.io",
+            "username": "admin@intellistock.in",
             "role": "Admin",
             "name": "Dr. S. Sharma (Administrator)"
         },
         "default_staff": {
-            "username": "staff@inventory.io",
+            "username": "staff@intellistock.in",
             "role": "Staff",
-            "name": "Alex Mercer (Operations Staff)"
+            "name": "Arun Kumar (Operations Staff)"
         }
     }
 

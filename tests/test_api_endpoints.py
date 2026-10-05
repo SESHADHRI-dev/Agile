@@ -90,8 +90,8 @@ def test_staff_role_forbidden_on_create_product():
     headers = {"Authorization": "Bearer dev-staff-token"}
     payload = {
         "name": "Staff Attempted Product",
-        "category": "Sensors",
-        "price": 49.99,
+        "category": "Safety Equipment",
+        "price": 149.00,
         "quantity": 10,
         "min_stock_level": 5
     }
@@ -121,10 +121,10 @@ def test_products_list_and_search():
     assert data["count"] >= 15
 
     # Filter search
-    search_res = client.get("/api/products?search=Gateway")
+    search_res = client.get("/api/products?search=Bulb")
     assert search_res.status_code == 200
     search_data = search_res.json()
-    assert any("Gateway" in p["name"] for p in search_data["data"])
+    assert any("Bulb" in p["name"] for p in search_data["data"])
 
 
 def test_purchase_and_stock_increase():
@@ -216,24 +216,27 @@ def test_suppliers_crud():
 
     # 2. Create supplier (Admin)
     create_res = client.post("/api/suppliers", json={
-        "name": "Global Sensor Innovations",
-        "contact_person": "Sarah Chen",
-        "phone": "+1-555-0899",
-        "email": "sarah@globalsensors.com",
-        "address": "500 Innovation Way, Austin, TX",
-        "supplied_categories": "Sensors, IoT"
+        "name": "Chennai Precision Components Ltd",
+        "contact_person": "V. Anand",
+        "phone": "+91 98401 23456",
+        "email": "anand@chennaiprecision.in",
+        "address": "Plot 15, Ambattur Industrial Estate, Chennai, Tamil Nadu - 600058, India",
+        "supplied_categories": "Electrical Components, Hardware",
+        "gstin": "33AACCP1234A1Z7",
+        "state": "Tamil Nadu",
+        "pin_code": "600058"
     }, headers={"Authorization": "Bearer dev-admin-token"})
     assert create_res.status_code == 201
     sup = create_res.json()["data"]
     sup_id = sup["id"]
-    assert sup["name"] == "Global Sensor Innovations"
+    assert sup["name"] == "Chennai Precision Components Ltd"
 
     # 3. Update supplier
     update_res = client.put(f"/api/suppliers/{sup_id}", json={
-        "contact_person": "Dr. Sarah Chen"
+        "contact_person": "Dr. V. Anand"
     }, headers={"Authorization": "Bearer dev-admin-token"})
     assert update_res.status_code == 200
-    assert update_res.json()["data"]["contact_person"] == "Dr. Sarah Chen"
+    assert update_res.json()["data"]["contact_person"] == "Dr. V. Anand"
 
     # 4. Delete / Deactivate supplier
     del_res = client.delete(f"/api/suppliers/{sup_id}", headers={"Authorization": "Bearer dev-admin-token"})

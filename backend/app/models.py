@@ -24,7 +24,7 @@ class LoginResponse(BaseModel):
 
 
 # ==============================================================================
-# Product Models
+# Product Models (India / GST & HSN Support)
 # ==============================================================================
 
 class ProductCreate(BaseModel):
@@ -34,6 +34,8 @@ class ProductCreate(BaseModel):
     quantity: int = Field(..., ge=0)
     min_stock_level: int = Field(..., ge=0)
     supplier_id: Optional[str] = None
+    hsn_code: Optional[str] = "8536"
+    gst_rate: Optional[float] = 18.0
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
@@ -43,6 +45,8 @@ class ProductUpdate(BaseModel):
     min_stock_level: Optional[int] = Field(None, ge=0)
     supplier_id: Optional[str] = None
     is_active: Optional[bool] = None
+    hsn_code: Optional[str] = None
+    gst_rate: Optional[float] = None
 
 class ProductResponse(BaseModel):
     id: str
@@ -55,12 +59,14 @@ class ProductResponse(BaseModel):
     supplier_name: Optional[str] = None
     status: str  # "IN STOCK", "LOW STOCK", "OUT OF STOCK"
     is_active: bool
+    hsn_code: Optional[str] = "8536"
+    gst_rate: Optional[float] = 18.0
     created_at: str
     updated_at: str
 
 
 # ==============================================================================
-# Supplier Models
+# Supplier Models (India / GSTIN, State & PIN Code Support)
 # ==============================================================================
 
 class SupplierCreate(BaseModel):
@@ -70,6 +76,9 @@ class SupplierCreate(BaseModel):
     email: str = Field(..., max_length=120)
     address: str = Field(..., min_length=3, max_length=250)
     supplied_categories: Optional[str] = "General"
+    gstin: Optional[str] = None
+    state: Optional[str] = "Tamil Nadu"
+    pin_code: Optional[str] = "632007"
 
 class SupplierUpdate(BaseModel):
     name: Optional[str] = None
@@ -79,6 +88,9 @@ class SupplierUpdate(BaseModel):
     address: Optional[str] = None
     supplied_categories: Optional[str] = None
     is_active: Optional[bool] = None
+    gstin: Optional[str] = None
+    state: Optional[str] = None
+    pin_code: Optional[str] = None
 
 class SupplierResponse(BaseModel):
     id: str
@@ -89,11 +101,14 @@ class SupplierResponse(BaseModel):
     address: str
     supplied_categories: str
     is_active: bool
+    gstin: Optional[str] = None
+    state: Optional[str] = "Tamil Nadu"
+    pin_code: Optional[str] = "632007"
     created_at: str
 
 
 # ==============================================================================
-# Transaction Models
+# Transaction Models (India / GST, CGST, SGST, IGST Breakdown Support)
 # ==============================================================================
 
 class PurchaseCreate(BaseModel):
@@ -102,6 +117,10 @@ class PurchaseCreate(BaseModel):
     quantity: int = Field(..., gt=0)
     unit_cost: float = Field(..., gt=0)
     purchase_date: Optional[str] = None
+    gst_rate: Optional[float] = None
+    cgst: Optional[float] = None
+    sgst: Optional[float] = None
+    igst: Optional[float] = None
 
 class PurchaseResponse(BaseModel):
     id: str
@@ -114,12 +133,23 @@ class PurchaseResponse(BaseModel):
     total_cost: float
     purchase_date: str
     created_by: str
+    gst_rate: Optional[float] = 18.0
+    taxable_amount: Optional[float] = None
+    cgst: Optional[float] = None
+    sgst: Optional[float] = None
+    igst: Optional[float] = None
+    total_tax: Optional[float] = None
 
 class SaleCreate(BaseModel):
     product_id: str
     quantity: int = Field(..., gt=0)
     unit_price: float = Field(..., gt=0)
     sale_date: Optional[str] = None
+    customer_name: Optional[str] = "Walk-in Customer"
+    gst_rate: Optional[float] = None
+    cgst: Optional[float] = None
+    sgst: Optional[float] = None
+    igst: Optional[float] = None
 
 class SaleResponse(BaseModel):
     id: str
@@ -130,6 +160,13 @@ class SaleResponse(BaseModel):
     total_revenue: float
     sale_date: str
     created_by: str
+    customer_name: Optional[str] = "Walk-in Customer"
+    gst_rate: Optional[float] = 18.0
+    taxable_amount: Optional[float] = None
+    cgst: Optional[float] = None
+    sgst: Optional[float] = None
+    igst: Optional[float] = None
+    total_tax: Optional[float] = None
 
 
 # ==============================================================================

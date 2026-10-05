@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, TrendingUp, X, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { api } from '../../api';
+import { formatINR, formatIndianDateTime } from '../../utils/formatters';
 
 export default function SalesView({ sales = [], products = [], onRefresh }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -10,6 +11,7 @@ export default function SalesView({ sales = [], products = [], onRefresh }) {
 
   const [formData, setFormData] = useState({
     product_id: '',
+    customer_name: 'Sri Ganesh Traders',
     quantity: '',
     unit_price: ''
   });
@@ -19,8 +21,9 @@ export default function SalesView({ sales = [], products = [], onRefresh }) {
     const availableProd = products.find(p => p.quantity > 0) || products[0];
     setFormData({
       product_id: availableProd?.id || '',
+      customer_name: 'Sri Ganesh Traders',
       quantity: 1,
-      unit_price: availableProd ? availableProd.price : 50.00
+      unit_price: availableProd ? availableProd.price : 120.00
     });
     setError('');
     setMessage('');
@@ -56,6 +59,7 @@ export default function SalesView({ sales = [], products = [], onRefresh }) {
     try {
       const res = await api.recordSale({
         product_id: formData.product_id,
+        customer_name: formData.customer_name || 'Retail Counter',
         quantity: saleQty,
         unit_price: parseFloat(formData.unit_price)
       });
@@ -77,7 +81,7 @@ export default function SalesView({ sales = [], products = [], onRefresh }) {
         <div>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Outbound Sales Ledger</h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Record customer orders. Feeds historical time-series data into the demand prediction engine.
+            Record customer orders across Indian clients. Feeds historical time-series data into the demand prediction engine.
           </p>
         </div>
         <button onClick={handleOpenModal} className="btn btn-primary">
@@ -93,10 +97,11 @@ export default function SalesView({ sales = [], products = [], onRefresh }) {
             <tr>
               <th>Sale ID</th>
               <th>Product</th>
+              <th>Customer</th>
               <th>Quantity</th>
               <th>Unit Price</th>
               <th>Total Revenue</th>
-              <th>Sale Date</th>
+              <th>Sale Date (IST)</th>
               <th>Recorded By</th>
             </tr>
           </thead>
@@ -107,16 +112,17 @@ export default function SalesView({ sales = [], products = [], onRefresh }) {
                   {s.id}
                 </td>
                 <td style={{ fontWeight: 700 }}>{s.product_name || s.product_id}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{s.customer_name || 'Retail Counter'}</td>
                 <td><span className="badge badge-info">-{s.quantity} units</span></td>
-                <td>${s.unit_price.toFixed(2)}</td>
-                <td style={{ fontWeight: 700, color: 'var(--success)' }}>${s.total_revenue.toFixed(2)}</td>
-                <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{s.sale_date.slice(0, 19).replace('T', ' ')}</td>
+                <td>{formatINR(s.unit_price)}</td>
+                <td style={{ fontWeight: 700, color: 'var(--success)' }}>{formatINR(s.total_revenue)}</td>
+                <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{formatIndianDateTime(s.sale_date)}</td>
                 <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{s.created_by}</td>
               </tr>
             ))}
             {sales.length === 0 && (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                   No customer sales recorded yet.
                 </td>
               </tr>
@@ -162,10 +168,21 @@ export default function SalesView({ sales = [], products = [], onRefresh }) {
                   >
                     {products.map(p => (
                       <option key={p.id} value={p.id} disabled={p.quantity === 0}>
-                        {p.name} — Current Stock: {p.quantity} {p.quantity === 0 ? '(OUT OF STOCK)' : ''}
+                        {p.name} — Current Stock: {p.quantity} ({formatINR(p.price)}) {p.quantity === 0 ? '(OUT OF STOCK)' : ''}
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Customer / Client Name</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                    placeholder="e.g. Sri Ganesh Traders, Priya Enterprises, Vellore Tech Solutions"
+                  />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -182,7 +199,7 @@ export default function SalesView({ sales = [], products = [], onRefresh }) {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Unit Selling Price ($) *</label>
+                    <label className="form-label">Unit Selling Price (₹) *</label>
                     <input
                       type="number"
                       step="0.01"

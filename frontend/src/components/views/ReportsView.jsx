@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Cloud, CheckCircle2, TrendingUp, DollarSign } from 'lucide-react';
+import { FileText, Download, Cloud, CheckCircle2, TrendingUp, IndianRupee } from 'lucide-react';
 import { api } from '../../api';
+import { formatINR } from '../../utils/formatters';
 
 export default function ReportsView() {
   const [summary, setSummary] = useState(null);
@@ -33,7 +34,7 @@ export default function ReportsView() {
     {
       id: 'inventory',
       title: 'Current Inventory Valuation Report',
-      description: 'Comprehensive audit of all warehouse SKUs, holding values, and current stock status.',
+      description: 'Comprehensive audit of all warehouse SKUs, holding values, HSN codes, and current stock status in INR.',
       filename: 'report_inventory_*.csv'
     },
     {
@@ -45,13 +46,13 @@ export default function ReportsView() {
     {
       id: 'sales',
       title: 'Historical Sales Transaction Ledger',
-      description: 'Complete record of customer transactions used to train demand forecasting models.',
+      description: 'Complete record of customer transactions, GST tax breakdowns, and Indian buyer records.',
       filename: 'report_sales_*.csv'
     },
     {
       id: 'purchases',
       title: 'Supplier Purchase & Inbound Ledger',
-      description: 'Inbound replenishment batches, supplier references, and unit acquisition costs.',
+      description: 'Inbound replenishment batches, Tamil Nadu supplier references, GSTINs, and unit acquisition costs in INR.',
       filename: 'report_purchases_*.csv'
     },
     {
@@ -67,7 +68,7 @@ export default function ReportsView() {
       <div>
         <h2 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Audit Reports & Data Export Center</h2>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          Export tabular audit datasets as CSV for Excel/BI analysis or cloud synchronization to Amazon S3.
+          Export tabular audit datasets as CSV for Excel/BI analysis or cloud synchronization to Amazon S3. Configured for IntelliStock India (Vellore, TN).
         </p>
       </div>
 
@@ -81,21 +82,21 @@ export default function ReportsView() {
           <div className="glass-card" style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>TOTAL REVENUE LOGGED</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--success)' }}>
-              ${summary.total_sales_revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {formatINR(summary.total_sales_revenue)}
             </div>
           </div>
 
           <div className="glass-card" style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>TOTAL PROCUREMENT SPEND</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
-              ${summary.total_purchase_spend.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {formatINR(summary.total_purchase_spend)}
             </div>
           </div>
 
           <div className="glass-card" style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>CURRENT ASSET VALUATION</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
-              ${summary.total_inventory_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {formatINR(summary.total_inventory_value)}
             </div>
           </div>
         </div>

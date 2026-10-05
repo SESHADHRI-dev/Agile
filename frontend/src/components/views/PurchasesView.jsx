@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, ShoppingBag, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../../api';
+import { formatINR, formatIndianDateTime } from '../../utils/formatters';
 
 export default function PurchasesView({ purchases = [], products = [], suppliers = [], onRefresh }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -18,11 +19,12 @@ export default function PurchasesView({ purchases = [], products = [], suppliers
   const handleOpenModal = () => {
     const defaultProd = products[0]?.id || '';
     const defaultSup = suppliers[0]?.id || '';
+    const prodObj = products[0];
     setFormData({
       product_id: defaultProd,
       supplier_id: defaultSup,
       quantity: 50,
-      unit_cost: 25.00
+      unit_cost: prodObj ? prodObj.price : 120.00
     });
     setError('');
     setMessage('');
@@ -85,7 +87,7 @@ export default function PurchasesView({ purchases = [], products = [], suppliers
               <th>Quantity</th>
               <th>Unit Cost</th>
               <th>Total Amount</th>
-              <th>Purchase Date</th>
+              <th>Purchase Date (IST)</th>
               <th>Logged By</th>
             </tr>
           </thead>
@@ -98,9 +100,9 @@ export default function PurchasesView({ purchases = [], products = [], suppliers
                 <td style={{ fontWeight: 700 }}>{pur.product_name || pur.product_id}</td>
                 <td style={{ color: 'var(--text-secondary)' }}>{pur.supplier_name || pur.supplier_id}</td>
                 <td><span className="badge badge-in-stock">+{pur.quantity} units</span></td>
-                <td>${pur.unit_cost.toFixed(2)}</td>
-                <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>${pur.total_cost.toFixed(2)}</td>
-                <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{pur.purchase_date.slice(0, 19).replace('T', ' ')}</td>
+                <td>{formatINR(pur.unit_cost)}</td>
+                <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{formatINR(pur.total_cost)}</td>
+                <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{formatIndianDateTime(pur.purchase_date)}</td>
                 <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{pur.created_by}</td>
               </tr>
             ))}
@@ -147,12 +149,20 @@ export default function PurchasesView({ purchases = [], products = [], suppliers
                   <select
                     className="form-select"
                     value={formData.product_id}
-                    onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
+                    onChange={(e) => {
+                      const pId = e.target.value;
+                      const pObj = products.find(p => p.id === pId);
+                      setFormData({ 
+                        ...formData, 
+                        product_id: pId,
+                        unit_cost: pObj ? pObj.price : formData.unit_cost
+                      });
+                    }}
                     required
                   >
                     {products.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} (Current Stock: {p.quantity})
+                        {p.name} (Stock: {p.quantity} | {formatINR(p.price)})
                       </option>
                     ))}
                   </select>
@@ -167,7 +177,7 @@ export default function PurchasesView({ purchases = [], products = [], suppliers
                     required
                   >
                     {suppliers.map(s => (
-                      <option key={s.id} value={s.id}>{s.name} ({s.contact_person})</option>
+                      <option key={s.id} value={s.id}>{s.name} ({s.city}, {s.state})</option>
                     ))}
                   </select>
                 </div>
@@ -186,7 +196,7 @@ export default function PurchasesView({ purchases = [], products = [], suppliers
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Unit Cost ($) *</label>
+                    <label className="form-label">Unit Cost (₹) *</label>
                     <input
                       type="number"
                       step="0.01"

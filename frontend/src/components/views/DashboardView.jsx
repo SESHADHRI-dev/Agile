@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Package,
-  DollarSign,
+  IndianRupee,
   AlertTriangle,
   XCircle,
   TrendingUp,
@@ -11,6 +11,7 @@ import {
   BrainCircuit,
   CheckCircle2
 } from 'lucide-react';
+import { formatINR, formatIndianNumber, formatIndianDate } from '../../utils/formatters';
 
 export default function DashboardView({
   inventorySummary,
@@ -100,7 +101,7 @@ export default function DashboardView({
               <CheckCircle2 size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 800 }}>{total_units.toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 500, color: 'var(--text-muted)' }}>units</span></div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 800 }}>{formatIndianNumber(total_units)} <span style={{ fontSize: '1rem', fontWeight: 500, color: 'var(--text-muted)' }}>units</span></div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
             Current physical warehouse inventory
           </div>
@@ -109,14 +110,14 @@ export default function DashboardView({
         {/* Card 3: Inventory Valuation */}
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>INVENTORY VALUE</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>₹ INVENTORY VALUE</span>
             <div style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6' }}>
-              <DollarSign size={18} />
+              <IndianRupee size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 800 }}>${total_inventory_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 800 }}>{formatINR(total_inventory_value)}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            Based on current unit selling prices
+            Total value of inventory held in INR (₹)
           </div>
         </div>
 
@@ -234,8 +235,8 @@ export default function DashboardView({
                   <tr key={sale.id}>
                     <td style={{ fontWeight: 600 }}>{sale.product_name || sale.product_id}</td>
                     <td><span className="badge badge-info">-{sale.quantity}</span></td>
-                    <td style={{ fontWeight: 700, color: 'var(--success)' }}>${sale.total_revenue.toFixed(2)}</td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{sale.sale_date.slice(0, 10)}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--success)' }}>{formatINR(sale.total_revenue)}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{formatIndianDate(sale.sale_date)}</td>
                   </tr>
                 ))}
                 {recentSales.length === 0 && (
@@ -278,7 +279,7 @@ export default function DashboardView({
                     <td style={{ fontWeight: 600 }}>{pur.product_name || pur.product_id}</td>
                     <td style={{ color: 'var(--text-secondary)' }}>{pur.supplier_name || 'Vendor'}</td>
                     <td><span className="badge badge-in-stock">+{pur.quantity}</span></td>
-                    <td style={{ fontWeight: 700 }}>${pur.total_cost.toFixed(2)}</td>
+                    <td style={{ fontWeight: 700 }}>{formatINR(pur.total_cost)}</td>
                   </tr>
                 ))}
                 {recentPurchases.length === 0 && (

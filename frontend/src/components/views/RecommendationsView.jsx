@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ClipboardCheck, RefreshCw, ShoppingBag, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api } from '../../api';
+import { formatINR, formatIndianNumber } from '../../utils/formatters';
 
 export default function RecommendationsView({ onNavigate }) {
   const [recommendations, setRecommendations] = useState([]);
@@ -60,13 +61,13 @@ export default function RecommendationsView({ onNavigate }) {
         <div className="glass-card" style={{ padding: '1rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>TOTAL RESTOCK REQUIRED</div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
-            {totalRestockUnits.toLocaleString()} units
+            {formatIndianNumber(totalRestockUnits)} units
           </div>
         </div>
         <div className="glass-card" style={{ padding: '1rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>ESTIMATED CAPITAL NEEDED</div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#8b5cf6' }}>
-            ${totalEstimatedCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatINR(totalEstimatedCost)}
           </div>
         </div>
       </div>

@@ -20,31 +20,46 @@ logger = logging.getLogger("inventory-auth")
 SECRET_KEY = "mtech-software-engineering-scm-inventory-secret-key"
 security = HTTPBearer(auto_error=False)
 
-# Predefined Local Development Profiles
+# Predefined Local Development Profiles (Indian Enterprise Identities)
 LOCAL_USERS = {
+    "admin@intellistock.in": {
+        "id": "USR-ADM-001",
+        "username": "admin@intellistock.in",
+        "password": "Password123!",
+        "role": "Admin",
+        "name": "Dr. S. Sharma (Administrator)"
+    },
+    "staff@intellistock.in": {
+        "id": "USR-STF-002",
+        "username": "staff@intellistock.in",
+        "password": "Password123!",
+        "role": "Staff",
+        "name": "Arun Kumar (Operations Staff)"
+    },
+    # Backwards compatibility aliases
     "admin@inventory.io": {
         "id": "USR-ADM-001",
-        "username": "admin@inventory.io",
+        "username": "admin@intellistock.in",
         "password": "Password123!",
         "role": "Admin",
         "name": "Dr. S. Sharma (Administrator)"
     },
     "staff@inventory.io": {
         "id": "USR-STF-002",
-        "username": "staff@inventory.io",
+        "username": "staff@intellistock.in",
         "password": "Password123!",
         "role": "Staff",
-        "name": "Alex Mercer (Operations Staff)"
+        "name": "Arun Kumar (Operations Staff)"
     }
 }
 
 # Recognized Local Development Tokens for instant, friction-free testing
 DEV_TOKENS = {
-    "dev-admin-token": LOCAL_USERS["admin@inventory.io"],
-    "dev-staff-token": LOCAL_USERS["staff@inventory.io"],
-    "dev-token": LOCAL_USERS["admin@inventory.io"],
-    "local-admin-token": LOCAL_USERS["admin@inventory.io"],
-    "local-staff-token": LOCAL_USERS["staff@inventory.io"]
+    "dev-admin-token": LOCAL_USERS["admin@intellistock.in"],
+    "dev-staff-token": LOCAL_USERS["staff@intellistock.in"],
+    "dev-token": LOCAL_USERS["admin@intellistock.in"],
+    "local-admin-token": LOCAL_USERS["admin@intellistock.in"],
+    "local-staff-token": LOCAL_USERS["staff@intellistock.in"]
 }
 
 

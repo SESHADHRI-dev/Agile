@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
 import { Plus, Search, Filter, Edit, Trash2, X, AlertCircle } from 'lucide-react';
 import { api } from '../../api';
+import { formatINR, INDIAN_PRODUCT_CATEGORIES } from '../../utils/formatters';
 
 export default function ProductsView({ products = [], suppliers = [], onRefresh, user }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,14 +12,16 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
 
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Electronics',
+    category: 'Electrical Components',
     price: '',
     quantity: '',
     min_stock_level: '',
-    supplier_id: ''
+    supplier_id: '',
+    hsn_code: '8536',
+    gst_rate: 18.0
   });
 
-  const categories = ['ALL', 'Electronics', 'Sensors', 'Hydraulics', 'Power Supplies', 'Hardware'];
+  const categories = ['ALL', ...INDIAN_PRODUCT_CATEGORIES];
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,11 +34,13 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
     setEditingProduct(null);
     setFormData({
       name: '',
-      category: 'Electronics',
+      category: 'Electrical Components',
       price: '',
       quantity: '',
       min_stock_level: '',
-      supplier_id: suppliers[0]?.id || ''
+      supplier_id: suppliers[0]?.id || '',
+      hsn_code: '8536',
+      gst_rate: 18.0
     });
     setFormError('');
     setModalOpen(true);
@@ -50,7 +54,9 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
       price: prod.price,
       quantity: prod.quantity,
       min_stock_level: prod.min_stock_level,
-      supplier_id: prod.supplier_id || ''
+      supplier_id: prod.supplier_id || '',
+      hsn_code: prod.hsn_code || '8536',
+      gst_rate: prod.gst_rate || 18.0
     });
     setFormError('');
     setModalOpen(true);
@@ -68,7 +74,9 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
         price: parseFloat(formData.price),
         quantity: parseInt(formData.quantity, 10),
         min_stock_level: parseInt(formData.min_stock_level, 10),
-        supplier_id: formData.supplier_id || undefined
+        supplier_id: formData.supplier_id || undefined,
+        hsn_code: formData.hsn_code || '8536',
+        gst_rate: parseFloat(formData.gst_rate) || 18.0
       };
 
       if (editingProduct) {
@@ -143,10 +151,12 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
               <th>ID</th>
               <th>Product Name</th>
               <th>Category</th>
-              <th>Price</th>
+              <th>HSN</th>
+              <th>Price (₹)</th>
               <th>Quantity</th>
               <th>Min Stock</th>
               <th>Status</th>
+              <th>GST</th>
               <th>Supplier</th>
               {user?.role === 'Admin' && <th style={{ textAlign: 'right' }}>Actions</th>}
             </tr>
@@ -164,10 +174,12 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
                   </td>
                   <td style={{ fontWeight: 700 }}>{p.name}</td>
                   <td><span className="badge badge-info">{p.category}</span></td>
-                  <td style={{ fontWeight: 700 }}>${p.price.toFixed(2)}</td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.hsn_code || '8536'}</td>
+                  <td style={{ fontWeight: 700 }}>{formatINR(p.price)}</td>
                   <td style={{ fontWeight: 700 }}>{p.quantity}</td>
                   <td style={{ color: 'var(--text-secondary)' }}>{p.min_stock_level}</td>
                   <td><span className={`badge ${badgeClass}`}>{p.status}</span></td>
+                  <td><span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{p.gst_rate || 18}%</span></td>
                   <td style={{ color: 'var(--text-secondary)' }}>{p.supplier_name || '—'}</td>
                   {user?.role === 'Admin' && (
                     <td style={{ textAlign: 'right' }}>
@@ -246,7 +258,7 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
                     className="form-input"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. Industrial IoT Sensor Hub"
+                    placeholder="e.g. LED Bulb 9W Cool Day White"
                   />
                 </div>
 
@@ -265,7 +277,7 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Unit Price ($) *</label>
+                    <label className="form-label">Unit Price (₹) *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -276,6 +288,34 @@ export default function ProductsView({ products = [], suppliers = [], onRefresh,
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       placeholder="0.00"
                     />
+                  </div>
+                </div>
+
+                {/* India / GST Fields: HSN Code & GST Rate */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">HSN/SAC Code</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={formData.hsn_code}
+                      onChange={(e) => setFormData({ ...formData, hsn_code: e.target.value })}
+                      placeholder="e.g. 8539"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">GST Rate (%)</label>
+                    <select
+                      className="form-select"
+                      value={formData.gst_rate}
+                      onChange={(e) => setFormData({ ...formData, gst_rate: e.target.value })}
+                    >
+                      <option value="5">5% (Essential Goods)</option>
+                      <option value="12">12% (Packaging / Office Supplies)</option>
+                      <option value="18">18% (Standard Industrial / Electrical)</option>
+                      <option value="28">28% (Luxury / Specialized Equipment)</option>
+                    </select>
                   </div>
                 </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, X, Phone, Mail, MapPin, AlertCircle } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, Phone, Mail, MapPin, AlertCircle, Building2, CheckCircle2 } from 'lucide-react';
 import { api } from '../../api';
+import { INDIAN_STATES, formatIndianPhone, isValidIndianPhone } from '../../utils/formatters';
 
 export default function SuppliersView({ suppliers = [], onRefresh, user }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,12 +16,17 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
     phone: '',
     email: '',
     address: '',
-    supplied_categories: 'Electronics, Hardware'
+    state: 'Tamil Nadu',
+    pin_code: '632007',
+    gstin: '',
+    supplied_categories: 'Electrical Components, Hardware'
   });
 
   const filteredSuppliers = suppliers.filter((s) => {
     return s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
            s.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           (s.address && s.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+           (s.state && s.state.toLowerCase().includes(searchTerm.toLowerCase())) ||
            s.email.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -32,7 +38,10 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
       phone: '',
       email: '',
       address: '',
-      supplied_categories: 'Electronics, Hardware'
+      state: 'Tamil Nadu',
+      pin_code: '632007',
+      gstin: '',
+      supplied_categories: 'Electrical Components, Hardware'
     });
     setFormError('');
     setModalOpen(true);
@@ -46,6 +55,9 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
       phone: sup.phone,
       email: sup.email,
       address: sup.address,
+      state: sup.state || 'Tamil Nadu',
+      pin_code: sup.pin_code || '632007',
+      gstin: sup.gstin || '',
       supplied_categories: sup.supplied_categories || 'General'
     });
     setFormError('');
@@ -55,6 +67,12 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+
+    if (formData.pin_code && !/^[1-9][0-9]{5}$/.test(formData.pin_code.trim())) {
+      setFormError('Please enter a valid 6-digit Indian PIN code (e.g., 632007).');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -87,13 +105,13 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Top Action Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ position: 'relative', width: '100%', maxWidth: '360px' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
           <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
             className="form-input"
             style={{ paddingLeft: '2.4rem' }}
-            placeholder="Search suppliers by name, contact, email..."
+            placeholder="Search suppliers by name, city, contact..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -102,7 +120,7 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
         {user?.role === 'Admin' && (
           <button onClick={handleOpenAdd} className="btn btn-primary">
             <Plus size={16} />
-            <span>Add Supplier</span>
+            <span>Add Indian Supplier</span>
           </button>
         )}
       </div>
@@ -110,7 +128,7 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
       {/* Suppliers Grid / Cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
         gap: '1.25rem'
       }}>
         {filteredSuppliers.map((sup) => (
@@ -140,19 +158,29 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Phone size={14} color="var(--text-muted)" />
-                <span>{sup.phone}</span>
+                <span style={{ fontFamily: 'var(--font-mono)' }}>{formatIndianPhone(sup.phone)}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Mail size={14} color="var(--text-muted)" />
                 <span>{sup.email}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <MapPin size={14} color="var(--text-muted)" />
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                <MapPin size={14} color="var(--text-muted)" style={{ marginTop: '0.2rem', flexShrink: 0 }} />
                 <span>{sup.address}</span>
               </div>
             </div>
 
-            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {/* GSTIN & State Badge */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem' }}>
+              <span className="badge badge-info">
+                {sup.state || 'Tamil Nadu'} &bull; PIN: {sup.pin_code || '632007'}
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', fontSize: '0.725rem' }}>
+                GSTIN: <strong style={{ color: 'var(--text-primary)' }}>{sup.gstin || '33AABCS1234A1Z1'}</strong>
+              </span>
+            </div>
+
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               <strong>Supplied:</strong> {sup.supplied_categories}
             </div>
           </div>
@@ -162,10 +190,10 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
       {/* Add / Edit Supplier Modal */}
       {modalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ maxWidth: '540px' }}>
             <div className="modal-header">
               <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>
-                {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
+                {editingSupplier ? 'Edit Supplier Profile' : 'Add New Indian Supplier'}
               </h3>
               <button onClick={() => setModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <X size={20} />
@@ -182,14 +210,14 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
                 )}
 
                 <div className="form-group">
-                  <label className="form-label">Supplier Name *</label>
+                  <label className="form-label">Supplier Business Name *</label>
                   <input
                     type="text"
                     required
                     className="form-input"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. Apex Electronics Ltd"
+                    placeholder="e.g. Sri Lakshmi Industrial Supplies"
                   />
                 </div>
 
@@ -201,20 +229,20 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
                     className="form-input"
                     value={formData.contact_person}
                     onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
-                    placeholder="e.g. Robert Vance"
+                    placeholder="e.g. K. Sundaram"
                   />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
-                    <label className="form-label">Phone *</label>
+                    <label className="form-label">Phone (+91 Format) *</label>
                     <input
                       type="text"
                       required
                       className="form-input"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+1-555-0192"
+                      placeholder="+91 98421 54321"
                     />
                   </div>
                   <div className="form-group">
@@ -225,32 +253,73 @@ export default function SuppliersView({ suppliers = [], onRefresh, user }) {
                       className="form-input"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="contact@supplier.com"
+                      placeholder="orders@srilakshmiind.in"
                     />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Address *</label>
+                  <label className="form-label">Full Address (India) *</label>
                   <input
                     type="text"
                     required
                     className="form-input"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="123 Industrial Parkway, City, State"
+                    placeholder="e.g. Plot 42, SIDCO Industrial Estate, Katpadi, Vellore"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Supplied Categories</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={formData.supplied_categories}
-                    onChange={(e) => setFormData({ ...formData, supplied_categories: e.target.value })}
-                    placeholder="e.g. Electronics, Sensors, Hardware"
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">State / UT *</label>
+                    <select
+                      className="form-select"
+                      value={formData.state}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    >
+                      {INDIAN_STATES.map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">PIN Code *</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      required
+                      className="form-input"
+                      value={formData.pin_code}
+                      onChange={(e) => setFormData({ ...formData, pin_code: e.target.value })}
+                      placeholder="632007"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">GSTIN (15 Digits)</label>
+                    <input
+                      type="text"
+                      maxLength={15}
+                      className="form-input"
+                      value={formData.gstin}
+                      onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
+                      placeholder="33AABCS1234A1Z1"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Supplied Categories</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={formData.supplied_categories}
+                      onChange={(e) => setFormData({ ...formData, supplied_categories: e.target.value })}
+                      placeholder="e.g. Electrical Components, Hardware"
+                    />
+                  </div>
                 </div>
               </div>
 

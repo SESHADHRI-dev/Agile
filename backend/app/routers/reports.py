@@ -49,10 +49,10 @@ def export_report(
     filename = f"report_{report_type}_{timestamp}.csv"
 
     if report_type == "inventory":
-        writer.writerow(["Product ID", "Product Name", "Category", "Unit Price ($)", "Quantity in Stock", "Min Stock Level", "Status", "Valuation ($)"])
+        writer.writerow(["Product ID", "Product Name", "Category", "HSN Code", "GST Rate (%)", "Unit Price (₹)", "Quantity in Stock", "Min Stock Level", "Status", "Valuation (₹)"])
         for p in db.get_products():
             val = round(p["quantity"] * p["price"], 2)
-            writer.writerow([p["id"], p["name"], p["category"], f"{p['price']:.2f}", p["quantity"], p["min_stock_level"], p["status"], f"{val:.2f}"])
+            writer.writerow([p["id"], p["name"], p["category"], p.get("hsn_code", "8536"), f"{p.get('gst_rate', 18.0)}%", f"₹{p['price']:.2f}", p["quantity"], p["min_stock_level"], p["status"], f"₹{val:.2f}"])
 
     elif report_type == "low_stock":
         writer.writerow(["Product ID", "Product Name", "Category", "Current Stock", "Min Stock Level", "Deficit Units", "Status"])
@@ -62,14 +62,26 @@ def export_report(
                 writer.writerow([p["id"], p["name"], p["category"], p["quantity"], p["min_stock_level"], deficit, p["status"]])
 
     elif report_type == "sales":
-        writer.writerow(["Sale ID", "Product ID", "Product Name", "Quantity Sold", "Unit Price ($)", "Total Revenue ($)", "Sale Date", "Recorded By"])
+        writer.writerow(["Sale ID", "Product ID", "Product Name", "Customer Name", "Quantity Sold", "Unit Price (₹)", "Total Revenue (₹)", "GST (%)", "CGST (₹)", "SGST (₹)", "IGST (₹)", "Sale Date (IST)", "Recorded By"])
         for s in db.get_sales(limit=1000):
-            writer.writerow([s["id"], s["product_id"], s.get("product_name", ""), s["quantity"], f"{s['unit_price']:.2f}", f"{s['total_revenue']:.2f}", s["sale_date"], s["created_by"]])
+            writer.writerow([
+                s["id"], s["product_id"], s.get("product_name", ""),
+                s.get("customer_name", "Sri Ganesh Traders"),
+                s["quantity"], f"₹{s['unit_price']:.2f}", f"₹{s['total_revenue']:.2f}",
+                s.get("gst_rate", 18.0), s.get("cgst", 0.0), s.get("sgst", 0.0), s.get("igst", 0.0),
+                s["sale_date"], s["created_by"]
+            ])
 
     elif report_type == "purchases":
-        writer.writerow(["Purchase ID", "Product ID", "Product Name", "Supplier Name", "Quantity", "Unit Cost ($)", "Total Cost ($)", "Purchase Date", "Recorded By"])
+        writer.writerow(["Purchase ID", "Product ID", "Product Name", "Supplier Name", "Supplier GSTIN", "Quantity", "Unit Cost (₹)", "Total Cost (₹)", "GST (%)", "CGST (₹)", "SGST (₹)", "Purchase Date (IST)", "Recorded By"])
         for p in db.get_purchases(limit=1000):
-            writer.writerow([p["id"], p["product_id"], p.get("product_name", ""), p.get("supplier_name", ""), p["quantity"], f"{p['unit_cost']:.2f}", f"{p['total_cost']:.2f}", p["purchase_date"], p["created_by"]])
+            writer.writerow([
+                p["id"], p["product_id"], p.get("product_name", ""),
+                p.get("supplier_name", ""), p.get("supplier_gstin", "33AABCS1234A1Z1"),
+                p["quantity"], f"₹{p['unit_cost']:.2f}", f"₹{p['total_cost']:.2f}",
+                p.get("gst_rate", 18.0), p.get("cgst", 0.0), p.get("sgst", 0.0),
+                p["purchase_date"], p["created_by"]
+            ])
 
     elif report_type == "predictions":
         writer.writerow(["Product ID", "Product Name", "Category", "Current Stock", "Forecast Period (Days)", "Predicted Demand", "Safety Stock", "Recommended Restock", "Urgency Status"])

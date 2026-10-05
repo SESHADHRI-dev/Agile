@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Package, Search, Filter, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { formatINR, formatIndianNumber } from '../../utils/formatters';
 
 export default function InventoryView({ products = [], inventorySummary }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,11 +31,11 @@ export default function InventoryView({ products = [], inventorySummary }) {
       }}>
         <div className="glass-card" style={{ padding: '1rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>TOTAL ASSETS HELD</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>${total_inventory_value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{formatINR(total_inventory_value)}</div>
         </div>
         <div className="glass-card" style={{ padding: '1rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>TOTAL QUANTITY</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{total_units.toLocaleString()} units</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{formatIndianNumber(total_units)} units</div>
         </div>
         <div className="glass-card" style={{ padding: '1rem' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--warning)' }}>LOW STOCK ITEMS</div>
@@ -84,8 +85,8 @@ export default function InventoryView({ products = [], inventorySummary }) {
               <th>Current Stock</th>
               <th>Min Stock</th>
               <th>Stock Status</th>
-              <th>Unit Price</th>
-              <th>Total Valuation</th>
+              <th>Unit Price (₹)</th>
+              <th>Total Valuation (₹)</th>
             </tr>
           </thead>
           <tbody>
@@ -102,12 +103,12 @@ export default function InventoryView({ products = [], inventorySummary }) {
                   </td>
                   <td style={{ fontWeight: 700 }}>{item.name}</td>
                   <td><span className="badge badge-info">{item.category}</span></td>
-                  <td style={{ fontWeight: 800, fontSize: '0.95rem' }}>{item.quantity}</td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{item.min_stock_level}</td>
+                  <td style={{ fontWeight: 800, fontSize: '0.95rem' }}>{formatIndianNumber(item.quantity)}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{formatIndianNumber(item.min_stock_level)}</td>
                   <td><span className={`badge ${badge}`}>{item.status}</span></td>
-                  <td>${item.price.toFixed(2)}</td>
+                  <td>{formatINR(item.price)}</td>
                   <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                    ${valuation.toFixed(2)}
+                    {formatINR(valuation)}
                   </td>
                 </tr>
               );

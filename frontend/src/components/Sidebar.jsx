@@ -65,10 +65,10 @@ export default function Sidebar({ activeTab, setActiveTab, alertCount = 0, user,
           </div>
           <div>
             <h2 style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-              IntelliStock
+              IntelliStock India
             </h2>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-              M.Tech Cloud Project
+            <span style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+              Katpadi, Vellore &bull; TN
             </span>
           </div>
         </div>

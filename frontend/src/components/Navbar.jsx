@@ -44,7 +44,7 @@ export default function Navbar({
             {activeTitle}
           </h1>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Cloud Inventory & Stock Prediction System &bull; <span style={{ color: 'var(--accent-primary)' }}>Active Session</span>
+            IntelliStock India &bull; Katpadi, Vellore &bull; <span style={{ color: 'var(--accent-primary)' }}>Active Session (IST)</span>
           </div>
         </div>
       </div>

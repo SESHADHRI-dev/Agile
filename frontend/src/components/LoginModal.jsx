@@ -3,7 +3,7 @@ import { BrainCircuit, ShieldCheck, UserCheck, Lock, Mail, AlertCircle } from 'l
 import { api } from '../api';
 
 export default function LoginModal({ onLoginSuccess }) {
-  const [username, setUsername] = useState('admin@inventory.io');
+  const [username, setUsername] = useState('admin@intellistock.in');
   const [password, setPassword] = useState('Password123!');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -51,9 +51,9 @@ export default function LoginModal({ onLoginSuccess }) {
           }}>
             <BrainCircuit size={32} />
           </div>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>IntelliStock Cloud</h2>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>IntelliStock India</h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-            Integrated M.Tech Software Engineering Project
+            Intelligent Inventory & ML Stock Prediction &bull; Katpadi, Vellore (Tamil Nadu)
           </p>
         </div>
 
@@ -107,26 +107,26 @@ export default function LoginModal({ onLoginSuccess }) {
           {/* Quick Demo Logins for Faculty */}
           <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', marginBottom: '0.75rem', fontWeight: 600 }}>
-              ONE-CLICK FACULTY DEMO PROFILES:
+              ONE-CLICK FACULTY EVALUATION PROFILES:
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('admin@inventory.io')}
+                onClick={() => handleQuickLogin('admin@intellistock.in')}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem' }}
               >
                 <ShieldCheck size={14} color="var(--accent-primary)" />
-                <span>Admin Login</span>
+                <span>Admin (Dr. Sharma)</span>
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('staff@inventory.io')}
+                onClick={() => handleQuickLogin('staff@intellistock.in')}
                 className="btn btn-secondary btn-sm"
                 style={{ fontSize: '0.75rem' }}
               >
                 <UserCheck size={14} color="var(--info)" />
-                <span>Staff Login</span>
+                <span>Staff (Arun Kumar)</span>
               </button>
             </div>
           </div>
